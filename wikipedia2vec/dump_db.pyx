@@ -15,6 +15,8 @@ import zlib
 from contextlib import closing
 from six.moves import cPickle as pickle
 from multiprocessing.pool import Pool
+from .utils.wiki_parser import parse_wikicode
+
 
 from .utils.wiki_page cimport WikiPage
 
@@ -225,6 +227,7 @@ def _parse(WikiPage page, preprocess_func):
     paragraphs = []
     cur_text = ''
     cur_links = []
+    info = {}
     abstract = True
 
     if preprocess_func is None:
@@ -283,9 +286,14 @@ def _parse(WikiPage page, preprocess_func):
         elif isinstance(node, mwparserfromhell.nodes.Heading):
             abstract = False
 
-    if cur_text and not cur_text.isspace():
-        paragraphs.append([cur_text, cur_links, abstract])
+        elif isinstance(node, mwparserfromhell.nodes.Template) and 'Infobox' in node.name:
+            for param in node.params:
+                if parse_wikicode(param.name) and parse_wikicode(param.value):
+                    info[parse_wikicode(param.name)] = parse_wikicode(param.value)
 
+    if cur_text and not cur_text.isspace():
+        paragraphs.append([cur_text, cur_links, abstract, info])
+    print(info)
     ret = [paragraphs, page.is_disambiguation]
 
     return ('page', ((page.title.encode('utf-8'), zlib.compress(pickle.dumps(ret, protocol=-1)))))
