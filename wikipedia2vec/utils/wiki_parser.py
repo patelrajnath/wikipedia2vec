@@ -164,3 +164,8 @@ def _(obj: nodes.HTMLEntity) -> WikiValue:
 @parse_wikicode.register(nodes.Argument)
 def _(obj: nodes.Argument) -> WikiValue:
     return None
+
+
+@parse_wikicode.register(nodes.Heading)
+def _(obj: nodes.Heading) -> WikiValue:
+    return None
