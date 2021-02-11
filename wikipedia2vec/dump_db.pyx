@@ -293,7 +293,6 @@ def _parse(WikiPage page, preprocess_func):
 
     if cur_text and not cur_text.isspace():
         paragraphs.append([cur_text, cur_links, abstract, info])
-    print(info)
     ret = [paragraphs, page.is_disambiguation]
 
     return ('page', ((page.title.encode('utf-8'), zlib.compress(pickle.dumps(ret, protocol=-1)))))
