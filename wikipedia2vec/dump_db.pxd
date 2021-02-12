@@ -15,6 +15,8 @@ cdef class DumpDB:
     cpdef is_disambiguation(self, unicode)
     cpdef list get_paragraphs(self, unicode)
     cdef list _deserialize_paragraphs(self, bytes)
+    cpdef dict get_infobox(self, unicode)
+    cdef dict _deserialize_infobox(self, bytes)
 
 
 cdef class Paragraph:

@@ -26,9 +26,10 @@ STYLE_RE = re.compile("'''*")
 
 
 cdef class Paragraph:
-    def __init__(self, unicode text, list wiki_links, bint abstract):
+    def __init__(self, unicode text, list wiki_links, bint abstract, dict infobox):
         self.text = text
         self.wiki_links = wiki_links
+        self.infobox = infobox
         self.abstract = abstract
 
     def __repr__(self):
@@ -38,7 +39,7 @@ cdef class Paragraph:
             return '<Paragraph %s>' % (self.text[:50] + '...')
 
     def __reduce__(self):
-        return (self.__class__, (self.text, self.wiki_links, self.abstract))
+        return (self.__class__, (self.text, self.wiki_links, self.abstract, self.infobox))
 
 
 cdef class WikiLink:
@@ -148,9 +149,25 @@ cdef class DumpDB:
         ret = []
         for obj in pickle.loads(zlib.decompress(value))[0]:
             wiki_links = [WikiLink(*args) for args in obj[1]]
+            print(len(obj))
             ret.append(Paragraph(obj[0], wiki_links, obj[2], obj[3]))
 
         return ret
+
+    cpdef dict get_infobox(self, unicode key):
+        cdef bytes value
+        with self._env.begin(db=self._page_db) as txn:
+            value = txn.get(key.encode('utf-8'))
+            if not value:
+                raise KeyError(key)
+        return self._deserialize_infobox(value)
+
+    cdef dict _deserialize_infobox(self, bytes value):
+        try:
+            obj = pickle.loads(zlib.decompress(value))[0][-1]
+            return obj[3]
+        except IndexError:
+            return {}
 
     @staticmethod
     def build(dump_reader, out_file, pool_size, chunk_size, preprocess_func=None,
@@ -293,6 +310,7 @@ def _parse(WikiPage page, preprocess_func):
 
     if cur_text and not cur_text.isspace():
         paragraphs.append([cur_text, cur_links, abstract, info])
+        print(info)
     ret = [paragraphs, page.is_disambiguation]
 
     return ('page', ((page.title.encode('utf-8'), zlib.compress(pickle.dumps(ret, protocol=-1)))))
