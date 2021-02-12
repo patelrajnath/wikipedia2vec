@@ -148,7 +148,7 @@ cdef class DumpDB:
         ret = []
         for obj in pickle.loads(zlib.decompress(value))[0]:
             wiki_links = [WikiLink(*args) for args in obj[1]]
-            ret.append(Paragraph(obj[0], wiki_links, obj[2]))
+            ret.append(Paragraph(obj[0], wiki_links, obj[2], obj[3]))
 
         return ret
 
